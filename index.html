@@ -49,9 +49,14 @@
     <section class="list-wrap" style="--i:2">
       <header class="list-head" id="listHead" hidden>
         <span class="mono" id="count"></span>
+        <span class="list-head-actions">
+        <button class="btn btn--ghost btn--sm" id="clearAll" type="button" title="Прибрати всі відео й тексти. Модель залишиться">
+          <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg><span class="hide-sm">Очистити</span>
+        </button>
         <button class="btn btn--soft btn--sm" id="zipAll" type="button" disabled>
           <svg viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/></svg><span>Усі тексти · ZIP</span>
         </button>
+        </span>
       </header>
       <div class="list" id="list"></div>
       <p class="empty" id="empty">Тут з’являться тексти. Вони зберігаються тільки в цьому браузері.</p>

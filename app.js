@@ -34,6 +34,7 @@ async function tx(mode, fn) {
 const dbAll = () => tx('readonly', (s) => s.getAll()).catch(() => []);
 const dbPut = (it) => tx('readwrite', (s) => s.put(strip(it))).catch(() => {});
 const dbDel = (id) => tx('readwrite', (s) => s.delete(id)).catch(() => {});
+const dbClear = () => tx('readwrite', (s) => s.clear()).catch(() => {});
 const strip = ({ file, ...rest }) => rest; // the video itself is never stored
 
 /* ---------- state ---------- */
@@ -120,6 +121,7 @@ async function pump() {
       let audio;
       try { audio = await decode(it.file); }
       catch { it.status = 'error'; it.error = 'Браузер не зміг дістати звук з цього файлу (спробуйте MP4 або MP3)'; renderRow(it); continue; }
+      if (!items.includes(it)) continue; // cleared while its audio was being decoded
       it.duration = audio.length / SR;
       it.status = 'run'; it.done = 0; it.total = 0; it.segments = []; renderRow(it);
       getWorker().postMessage({ type: 'run', id: it.id, audio, language: it.langSet }, [audio.buffer]);
@@ -359,6 +361,16 @@ $('list').addEventListener('click', async (e) => {
 });
 $('list').addEventListener('toggle', (e) => { const r = e.target.closest?.('.row'); const it = r && items.find((x) => x.id === r.dataset.id); if (it) it.open = e.target.open; }, true);
 $('zipAll').onclick = downloadAll;
+// clears every video in the queue and every saved text; the downloaded model stays
+$('clearAll').onclick = async () => {
+  if (!items.length) return;
+  if (!confirm('Прибрати всі відео й тексти з цієї сторінки? Модель залишиться в браузері.')) return;
+  const running = items.find((x) => x.status === 'run');
+  items.length = 0; // the running file's late messages find no item and are dropped (nothing gets saved)
+  if (running) worker?.postMessage({ type: 'cancel', id: running.id });
+  await dbClear();
+  renderList(); refreshStorage(); toast('Відео й тексти прибрано');
+};
 $('storage').addEventListener('click', async (e) => {
   if (e.target.id !== 'dropModel') return;
   if (busy) return toast('Спершу дочекайтесь кінця черги', true);

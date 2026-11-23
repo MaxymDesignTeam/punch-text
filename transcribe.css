@@ -54,6 +54,8 @@
 .list-wrap { display: flex; flex-direction: column; gap: 10px; animation: rise .7s var(--ease-out) backwards; animation-delay: .12s; }
 .list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 2px 0; }
 .list-head .mono { font-size: 12px; color: var(--muted); }
+.list-head-actions { display: flex; align-items: center; gap: 6px; }
+#clearAll:hover { color: var(--err); background: color-mix(in srgb, var(--err) 10%, transparent); }
 .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .list { display: flex; flex-direction: column; gap: 8px; }
 .row {
