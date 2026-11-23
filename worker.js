@@ -106,7 +106,7 @@ async function detectLanguage(chunk) {
 // a decoding loop ("de la publicidad de la publicidad …") collapses to one copy
 const unloop = (t) => t.replace(/(.{6,80}?)(?:[\s,.;:،-]*\1){3,}/gsu, '$1');
 
-async function run({ id, audio, language }) {
+async function run({ id, audio, language, offset = 0 }) {
   cancelled.delete(id);
   const wins = windows(audio);
   if (!wins.length) return self.postMessage({ type: 'done', id, langs: language ? [language] : [], segments: [] });
@@ -116,7 +116,7 @@ async function run({ id, audio, language }) {
   const t0 = performance.now();
   for (const w of wins) {
     if (cancelled.has(id)) { cancelled.delete(id); return self.postMessage({ type: 'cancelled', id, segments, langs: ranked(langs) }); }
-    const chunk = audio.subarray(w.s, w.e), off = w.s / SR, winEnd = w.e / SR;
+    const chunk = audio.subarray(w.s, w.e), off = offset + w.s / SR, winEnd = offset + w.e / SR; // times stay those of the original video
     const lang = language || (await detectLanguage(chunk)) || last || 'en';
     last = lang;
     langs.set(lang, (langs.get(lang) || 0) + (w.e - w.s) / SR);

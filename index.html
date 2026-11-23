@@ -32,6 +32,13 @@
         <span>Модель</span>
         <div class="seg seg--model" id="modelSeg" role="radiogroup" aria-label="Модель"></div>
       </div>
+      <div class="field field--flush">
+        <span>Що розпізнати</span>
+        <div class="seg seg--model" id="pickSeg" role="radiogroup" aria-label="Що розпізнати">
+          <button type="button" role="radio" data-v="all"><b>Весь файл</b><small>одразу в чергу</small></button>
+          <button type="button" role="radio" data-v="pick"><b>Шматок</b><small>виділити потрібне</small></button>
+        </div>
+      </div>
       <p class="hint settings-note" id="deviceNote"></p>
     </section>
 
@@ -44,6 +51,30 @@
       <button class="btn btn--primary" id="pick" type="button">Обрати файли</button>
       <p class="drop-foot mono">файли не покидають ваш комп’ютер · все працює в браузері</p>
       <input type="file" id="files" accept="video/*,audio/*,.mkv,.mov" multiple hidden />
+    </section>
+
+    <section class="panel editor" id="editor" hidden aria-label="Вибір шматка">
+      <header class="ed-head">
+        <span class="sec-num mono">✂</span>
+        <div class="ed-title"><b id="edName"></b><small class="mono" id="edCount"></small></div>
+        <button class="icon-btn icon-btn--danger" id="edDrop" type="button" title="Прибрати цей файл"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </header>
+      <div class="ed-player" id="edPlayer"><video id="edVideo" playsinline preload="auto"></video></div>
+      <div class="ed-wave" id="edWave">
+        <canvas id="edCanvas"></canvas>
+        <div class="ed-hover" id="edHover"><b></b></div>
+        <div class="ed-sel" id="edSel"><div class="ed-handle l" data-h="l"></div><div class="ed-handle r" data-h="r"></div></div>
+        <div class="ed-ph" id="edPh"></div>
+        <div class="ed-loading mono" id="edLoading"></div>
+      </div>
+      <div class="ed-scale mono"><span>0:00.0</span><span class="hint-keys hide-sm">тягніть по хвилі, щоб виділити · <kbd>Пробіл</kbd> грати · <kbd>[</kbd> <kbd>]</kbd> початок / кінець</span><span id="edTotal"></span></div>
+      <div class="ed-actions">
+        <button class="ed-play" id="edPlay" type="button" title="Програти виділене (Пробіл)"><svg viewBox="0 0 24 24" class="i-play"><path d="M7 4.5v15L19.5 12z"/></svg><svg viewBox="0 0 24 24" class="i-pause"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg></button>
+        <div class="ed-range"><b class="mono" id="edRangeT" title="Натисніть, щоб вписати точний час">0:00.0 → 0:00.0</b><input class="mono" id="edRangeIn" hidden spellcheck="false" autocomplete="off" aria-label="Шматок, напр. 1:20 - 3:45" /><small id="edRangeS"></small></div>
+        <div class="seg ed-marks"><button type="button" id="edStart" title="Початок там, де зараз відео ([)">[ початок</button><button type="button" id="edEnd" title="Кінець там, де зараз відео (])">кінець ]</button><button type="button" id="edAll" title="Виділити весь файл">весь</button></div>
+        <span class="ed-spacer"></span>
+        <button class="btn btn--primary" id="edGo" type="button"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>Розпізнати шматок</span></button>
+      </div>
     </section>
 
     <section class="list-wrap" style="--i:2">
