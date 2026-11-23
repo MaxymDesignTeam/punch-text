@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Punch Text · Punch Designers</title>
+  <meta name="description" content="Текст з відео прямо в браузері: Whisper, 99 мов, пачками" />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="icon" type="image/svg+xml" href="icons/transcribe.svg" />
+  <link rel="preload" href="fonts/inter-cyrillic.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="fonts/unbounded-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="hub.css" />
+  <link rel="stylesheet" href="calc.css" />
+  <link rel="stylesheet" href="transcribe.css" />
+</head>
+<body class="tx-page">
+  <header class="topbar">
+    <a class="brand" href="./">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-text"><span>Punch <b>Text</b></span><small class="mono">powered by MD team</small></span>
+    </a>
+    <div class="model-state mono" id="modelState" role="status" aria-live="polite"><i></i><span></span></div>
+  </header>
+
+  <main class="tx">
+    <section class="panel settings" style="--i:0">
+      <label class="field field--flush">
+        <span>Мова відео</span>
+        <span class="select"><select id="lang"></select><span class="select-btn" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></span>
+      </label>
+      <div class="field field--flush">
+        <span>Модель</span>
+        <div class="seg seg--model" id="modelSeg" role="radiogroup" aria-label="Модель"></div>
+      </div>
+      <p class="hint settings-note" id="deviceNote"></p>
+    </section>
+
+    <section class="drop" id="drop" style="--i:1" tabindex="0" role="button" aria-label="Додати відео або аудіо">
+      <div class="drop-art" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      </div>
+      <h2>Перетягніть сюди відео</h2>
+      <p>Можна одразу багато. Підходить і аудіо: MP4, MOV, WEBM, MP3, WAV, M4A</p>
+      <button class="btn btn--primary" id="pick" type="button">Обрати файли</button>
+      <p class="drop-foot mono">файли не покидають ваш комп’ютер · все працює в браузері</p>
+      <input type="file" id="files" accept="video/*,audio/*,.mkv,.mov" multiple hidden />
+    </section>
+
+    <section class="list-wrap" style="--i:2">
+      <header class="list-head" id="listHead" hidden>
+        <span class="mono" id="count"></span>
+        <button class="btn btn--soft btn--sm" id="zipAll" type="button" disabled>
+          <svg viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/></svg><span>Усі тексти · ZIP</span>
+        </button>
+      </header>
+      <div class="list" id="list"></div>
+      <p class="empty" id="empty">Тут з’являться тексти. Вони зберігаються тільки в цьому браузері.</p>
+      <p class="storage" id="storage"></p>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="app.js"></script>
+  <script type="module" src="bg.js"></script>
+</body>
+</html>

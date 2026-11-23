@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Punch Text mark: a speech bubble whose sound wave turns into lines of text, in the brand gradient -->
+  <defs>
+    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="10" y1="96" x2="90" y2="4">
+      <stop offset="0" stop-color="#ff4d2e"/>
+      <stop offset="1" stop-color="#ff9a3d"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#g)" transform="rotate(-6 50 50)">
+    <path fill-rule="evenodd" d="M22 10h56a14 14 0 0 1 14 14v38a14 14 0 0 1 -14 14h-30l-19 15a3 3 0 0 1 -4.8 -2.4v-12.6h-2.2a14 14 0 0 1 -14 -14v-38a14 14 0 0 1 14 -14zM22 20a4 4 0 0 0 -4 4v38a4 4 0 0 0 4 4h12v9l11.5 -9h32.5a4 4 0 0 0 4 -4v-38a4 4 0 0 0 -4 -4z"/>
+    <rect x="27" y="36" width="4.4" height="14" rx="2.2"/>
+    <rect x="34.5" y="31" width="4.4" height="24" rx="2.2"/>
+    <rect x="42" y="38" width="4.4" height="10" rx="2.2"/>
+    <rect x="52" y="31" width="22" height="5.4" rx="2.7"/>
+    <rect x="52" y="40.3" width="17" height="5.4" rx="2.7"/>
+    <rect x="52" y="49.6" width="20" height="5.4" rx="2.7"/>
+  </g>
+</svg>
