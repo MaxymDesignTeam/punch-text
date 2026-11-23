@@ -49,7 +49,26 @@ async function detectGpu() {
   catch { return { webgpu: false, f16: false }; }
 }
 const canTurbo = () => gpu.webgpu && gpu.f16;
-const deviceFor = (m) => (gpu.webgpu ? 'webgpu' : 'wasm');
+let paintModel = null, forceWasm = false; // set after the GPU gave up twice: the light model then runs on the processor
+const deviceFor = (m) => (gpu.webgpu && !forceWasm ? 'webgpu' : 'wasm');
+// WebGPU "device lost": the graphics driver reset the GPU (out of video memory, or a step took too long and
+// Windows killed it). The worker's model is dead after that, so it has to be restarted.
+const isGpuLost = (msg) => /device (was )?lost|mapasync|gpubuffer|webgpu|OrtRun\(\)|out of memory|воркер упав/i.test(String(msg || ''));
+function restartWorker() { worker?.terminate(); worker = null; model = { key: '', state: 'idle', loaded: 0, total: 0 }; renderModel(); }
+// after a GPU failure: first the same model in a fresh worker, then the light model, then the light model on the processor
+function fallBack(it) {
+  it.tries = (it.tries || 0) + 1;
+  if (it.tries > 3) return false;
+  restartWorker();
+  if (it.tries >= 2 && prefs.model === 'turbo') {
+    prefs.model = 'small'; savePrefs(); paintModel?.();
+    toast('Відеокарта не впоралась з точною моделлю, тому перемкнув на легку', true);
+  } else if (it.tries >= 3 && gpu.webgpu) {
+    forceWasm = true;
+    toast('Відеокарта не впоралась, тож далі працюю на процесорі (повільніше)', true);
+  }
+  return true;
+}
 
 /* ---------- worker ---------- */
 let waiters = [];
@@ -65,7 +84,15 @@ function getWorker() {
     if (it) onItemMessage(it, m);
     waiters = waiters.filter((w) => !w(m));
   };
-  worker.onerror = (e) => { console.error(e); model.state = 'error'; model.error = e.message || 'Воркер упав'; renderModel(); waiters.forEach((w) => w({ type: 'error', stage: 'load', message: model.error })); waiters = []; worker = null; };
+  worker.onerror = (e) => {
+    console.error(e);
+    const message = e.message || 'Воркер упав';
+    model = { key: '', state: model.state === 'ready' ? 'idle' : 'error', error: message, loaded: 0, total: 0 }; renderModel(); // a new worker must load the model again
+    // whoever waits (a model load or the current file) gets an error instead of waiting forever
+    const msgs = [{ type: 'error', stage: 'load', message }, { type: 'error', stage: 'run', id: current?.id, message }];
+    waiters = waiters.filter((w) => !msgs.some((m) => w(m)));
+    worker = null;
+  };
   return worker;
 }
 const waitFor = (pred) => new Promise((res) => waiters.push((m) => (pred(m) ? (res(m), true) : false)));
@@ -117,7 +144,8 @@ async function pump() {
       const it = [...items].reverse().find((x) => x.status === 'queued'); // oldest first
       if (!it) break;
       if (it.model !== prefs.model) it.model = prefs.model;
-      if (!(await ensureModel())) { for (const x of items) if (x.status === 'queued') { x.status = 'error'; x.error = 'Модель не завантажилась: ' + (model.error || ''); renderRow(x); } break; }
+      if (!(await ensureModel()) && isGpuLost(model.error) && fallBack(it)) continue;
+      if (model.state !== 'ready') { for (const x of items) if (x.status === 'queued') { x.status = 'error'; x.error = 'Модель не завантажилась: ' + (model.error || ''); renderRow(x); } break; }
       current = it;
       it.status = 'audio'; renderRow(it);
       let audio;
@@ -129,7 +157,14 @@ async function pump() {
       if (it.range) { offset = it.range[0]; audio = audio.slice(Math.floor(it.range[0] * SR), Math.ceil(it.range[1] * SR)); }
       it.status = 'run'; it.done = 0; it.total = 0; it.segments = []; renderRow(it);
       getWorker().postMessage({ type: 'run', id: it.id, audio, offset, language: it.langSet }, [audio.buffer]);
-      await waitFor((m) => m.id === it.id && ['done', 'cancelled', 'error'].includes(m.type));
+      const res = await waitFor((m) => m.id === it.id && ['done', 'cancelled', 'error'].includes(m.type));
+      if (res.type === 'error' && isGpuLost(res.message) && items.includes(it) && fallBack(it)) {
+        it.status = 'queued'; it.error = ''; it.segments = []; it.model = prefs.model; renderRow(it); // try this file again
+      } else if (res.type === 'error') {
+        it.status = 'error'; delete it.file;
+        if (isGpuLost(res.message)) it.error = forceWasm ? 'Не вдалося розпізнати навіть на процесорі. Закрийте інші вкладки й програми та спробуйте ще раз.' : 'Відеокарта не впоралась навіть з легкою моделлю. Закрийте інші вкладки й програми з відео та спробуйте ще раз, або відкрийте сторінку на потужнішому комп’ютері.';
+        renderRow(it);
+      }
       current = null;
     }
   } finally { busy = false; current = null; renderControls(); }
@@ -148,7 +183,9 @@ function onItemMessage(it, m) {
     renderRow(it); renderControls(); refreshStorage();
     if (m.type === 'done' && !items.some((x) => ['queued', 'audio', 'run'].includes(x.status))) toast('Готово — тексти збережено в цьому браузері');
   } else if (m.type === 'error') {
-    it.status = 'error'; it.error = m.message; delete it.file; renderRow(it); renderControls();
+    it.status = 'error'; it.rawError = m.message;
+    it.error = isGpuLost(m.message) ? 'Відеокарта не впоралась (WebGPU скинувся). Пробую ще раз…' : m.message;
+    renderRow(it); renderControls();
   }
 }
 
@@ -332,7 +369,7 @@ function buildSettings() {
 
   $('modelSeg').innerHTML = Object.entries(MODELS).map(([k, m]) => `<button type="button" role="radio" data-v="${k}"><b>${m.label}</b><small>${m.sub} · ${m.size}</small></button>`).join('');
   if (!canTurbo()) prefs.model = 'small';
-  const paint = () => { for (const b of $('modelSeg').children) { b.classList.toggle('is-active', b.dataset.v === prefs.model); b.setAttribute('aria-checked', b.dataset.v === prefs.model); } };
+  const paint = paintModel = () => { for (const b of $('modelSeg').children) { b.classList.toggle('is-active', b.dataset.v === prefs.model); b.setAttribute('aria-checked', b.dataset.v === prefs.model); } };
   $('modelSeg').onclick = (e) => {
     const b = e.target.closest('button'); if (!b || b.disabled) return;
     prefs.model = b.dataset.v; savePrefs(); paint();
